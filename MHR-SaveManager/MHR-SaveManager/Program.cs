@@ -21,63 +21,25 @@ namespace MHR_SaveManager
         private const string regSteamAppsNameValue = "Name";
         private const string steamFilename = "steam";
         private const string mhrInjector = "MHR - Reshade Injector Helper.exe";
+
         //Game Id
         private const string gameId = "1446780";
-        //User Id 
-        private static string userId = null;
+
         //Save settings
         private const int saveLimit = 100;
         private const int saveTime = 15 * 60 * 1000;
         private const int waitTime = 5 * 1000;
-        private static readonly ConsoleKey DESIRED_INPUT = ConsoleKey.Enter;
+
         //File/Folder info
         private static readonly string currentFilename = Process.GetCurrentProcess().ProcessName;
         private static readonly string steamData = $@"{GetRegKey(regSteamPath, regSteamPathValue)}/userdata";
+
         //User interaction
+        private static readonly ConsoleKey DESIRED_INPUT = ConsoleKey.Enter;
         private static ConsoleKeyInfo USER_INPUT;
 
-
-        private static void CopyAll(string sourceDirectory, string targetDirectory, bool isRootFolder = false)
-        {
-            if (isRootFolder)
-            {
-                targetDirectory += $"_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
-            }
-
-            var source = new DirectoryInfo(sourceDirectory);
-            var target = new DirectoryInfo(targetDirectory);
-
-            Console.WriteLine($"{DateTime.Now:dd_MM_yyyy HH:mm:ss} - Copying from {sourceDirectory} to {targetDirectory}");
-
-            Directory.CreateDirectory(target.FullName);
-
-            // Copy each file into the new directory.
-            foreach (var fi in source.GetFiles())
-            {
-                fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
-            }
-
-            // Copy each subdirectory using recursion.
-            foreach (var diSourceSubDir in source.GetDirectories())
-            {
-                var nextTargetSubDir = target.CreateSubdirectory(diSourceSubDir.Name);
-                CopyAll(diSourceSubDir.FullName, nextTargetSubDir.FullName);
-            }
-
-            if (isRootFolder)
-            {
-                Console.WriteLine($"{DateTime.Now:dd-mm-yyyy HH:mm:ss} - Completed");
-            }
-        }
-
-        private static async Task ExitApplication()
-        {
-            Console.WriteLine("Closing application...");
-
-            await Task.Delay(3 * 1000);
-
-            Environment.Exit(0);
-        }
+        //User Id
+        private static string userId = null;
 
         private static async Task Main()
         {
@@ -267,6 +229,48 @@ namespace MHR_SaveManager
         private static int ProcessCount(string processName)
         {
             return Process.GetProcessesByName(processName).Length;
+        }
+
+        private static void CopyAll(string sourceDirectory, string targetDirectory, bool isRootFolder = false)
+        {
+            if (isRootFolder)
+            {
+                targetDirectory += $"_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+            }
+
+            var source = new DirectoryInfo(sourceDirectory);
+            var target = new DirectoryInfo(targetDirectory);
+
+            Console.WriteLine($"{DateTime.Now:dd_MM_yyyy HH:mm:ss} - Copying from {sourceDirectory} to {targetDirectory}");
+
+            Directory.CreateDirectory(target.FullName);
+
+            // Copy each file into the new directory.
+            foreach (var fi in source.GetFiles())
+            {
+                fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
+            }
+
+            // Copy each subdirectory using recursion.
+            foreach (var diSourceSubDir in source.GetDirectories())
+            {
+                var nextTargetSubDir = target.CreateSubdirectory(diSourceSubDir.Name);
+                CopyAll(diSourceSubDir.FullName, nextTargetSubDir.FullName);
+            }
+
+            if (isRootFolder)
+            {
+                Console.WriteLine($"{DateTime.Now:dd-mm-yyyy HH:mm:ss} - Completed");
+            }
+        }
+
+        private static async Task ExitApplication()
+        {
+            Console.WriteLine("Closing application...");
+
+            await Task.Delay(3 * 1000);
+
+            Environment.Exit(0);
         }
 
         #region Close button logic
