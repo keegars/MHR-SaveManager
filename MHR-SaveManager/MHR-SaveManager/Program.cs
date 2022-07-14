@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 
@@ -22,8 +21,9 @@ namespace MHR_SaveManager
         private const string steamFilename = "steam";
         private const string mhrInjector = "MHR - Reshade Injector Helper.exe";
 
-        //Game Id
+        //Game info
         private const string gameId = "1446780";
+        private const string gameName = "MonsterhunterRise";
 
         //Save settings
         private const int saveLimit = 100;
@@ -65,6 +65,10 @@ namespace MHR_SaveManager
                     Process.Start(steamExePath);
                     await ExitApplication();
                 }
+                else
+                {
+                    Console.WriteLine("Steam is running.");
+                }
 
                 //Check we can get the the steam active user, if 0, means there is no one logged in
                 var activeUser = GetRegKey(regSteamActiveProcessPath, regSteamActiveUserValue);
@@ -75,27 +79,77 @@ namespace MHR_SaveManager
 
                     await ExitApplication();
                 }
+                else
+                {
+                    Console.WriteLine($"User: {activeUser} is currently logged in");
+                }
 
                 userId = activeUser;
 
                 //Create .bat to open save data folder, to make it easy to move files over when they want to recover it
                 CreateBatOpenFolder(steamData, activeUser, gameId);
 
-                //Check to see if injector program is in the folder, if so, launch that to launch rise
-                if (CurrentDirectoryHasFile(mhrInjector))
+                //Check if game process is already running, and ask user if they want to terminate it or skip launching game
+                var launchGame = true;
+                if (ProcessExists(gameName))
                 {
-                    Process.Start(Path.Combine(Environment.CurrentDirectory, mhrInjector));
+                    Console.Clear();
+                    Console.WriteLine($"Running process for {gameName}, do you wish to terminate the process to start a new process? ");
+                    Console.WriteLine("(Games can sometimes be left hanging, when steam hasn't closed them properly)");
+                    Console.WriteLine("");
+                    Console.WriteLine("Please press Y for yes, or N for no");
+
+                    ConsoleKeyInfo keyPress;
+
+                    do
+                    {
+                        keyPress = Console.ReadKey(false);
+                    } while (!(keyPress.Key == ConsoleKey.Y || keyPress.Key == ConsoleKey.N));
+
+                    if (keyPress.Key == ConsoleKey.Y)
+                    {
+                        //Kill game process
+                        KillProcess(gameName);
+
+                        //Wait 3 seconds to give it time to kill them
+                        await Task.Delay(3 * 1000);
+                    }
+                    else
+                    {
+                        launchGame = false;
+                    }
                 }
-                //Else, launch rise ourselves!
-                else
+
+                if (launchGame)
                 {
-                    //Launch Game
-                    Process.Start($"steam://run/{gameId}");
+                    //Check to see if injector program is in the folder, if so, launch that to launch rise
+                    if (CurrentDirectoryHasFile(mhrInjector))
+                    {
+                        Console.WriteLine("Starting game using ReShade injector");
+                        Process.Start(Path.Combine(Environment.CurrentDirectory, mhrInjector));
+                    }
+                    //Else, launch rise ourselves!
+                    else
+                    {
+                        //Launch Game
+                        Console.WriteLine("Starting game using steam api");
+                        Process.Start($"steam://run/{gameId}");
+                    }
                 }
 
                 ////Set up save back up process
                 //Set this thread to low priority to avoid potentially hiccuping the game
-                Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+                Console.WriteLine("Setting save manager to below normal thread priority");
+
+                var currentProcess = Process.GetCurrentProcess();
+                currentProcess.PriorityClass = ProcessPriorityClass.BelowNormal;
+
+                if (launchGame)
+                {
+                    //Wait 10 seconds to ensure that the game has had time to launch
+                    Console.WriteLine("Waiting 10 seconds before starting save process, this is to give the game time to run...");
+                    await Task.Delay(10 * 1000);
+                }
 
                 //Schedule backup of saves
                 var backupTask = Task.Run(() => ScheduledBackupSaveAsync());
@@ -173,9 +227,13 @@ namespace MHR_SaveManager
 
         private static async Task ScheduledBackupSaveAsync()
         {
+            //Get Process for checking if it is still running
+            var gameProcess = Process.GetProcessesByName(gameName).FirstOrDefault();
+
+            //Set up wait timer to minimise cpu time
             var totalWaitTime = 0;
 
-            while (USER_INPUT.Key != DESIRED_INPUT)
+            while (USER_INPUT.Key != DESIRED_INPUT && !gameProcess.HasExited)
             {
                 //Clear and backup the save data
                 Console.Clear();
@@ -189,11 +247,21 @@ namespace MHR_SaveManager
                 do
                 {
                     await Task.Delay(waitTime);
+
+                    //Check if the game is still running
+                    gameProcess.Refresh();
+
                     totalWaitTime += waitTime;
-                } while (totalWaitTime < saveTime && USER_INPUT.Key != DESIRED_INPUT);
+                } while (totalWaitTime < saveTime && USER_INPUT.Key != DESIRED_INPUT && !gameProcess.HasExited);
 
                 //Reset wait time
                 totalWaitTime = 0;
+            }
+
+            if (gameProcess.HasExited)
+            {
+                //Exit out of process and don't wait for user input
+                Environment.Exit(0);
             }
         }
 
@@ -219,6 +287,16 @@ namespace MHR_SaveManager
             var newFolderName = Path.Combine(saveFolderLocation, tmpName);
 
             CopyAll(gameSaveDataFolder, newFolderName, true);
+        }
+
+        private static void KillProcess(string gameName)
+        {
+            var processes = Process.GetProcessesByName(gameName);
+
+            foreach (var process in processes)
+            {
+                process.Kill();
+            }
         }
 
         private static bool ProcessExists(string processName)
