@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -225,6 +226,18 @@ namespace MHR_SaveManager
             }
         }
 
+        private static bool ProcessHasExited(Process process)
+        {
+            try
+            {
+                return process.HasExited;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static async Task ScheduledBackupSaveAsync()
         {
             //Get Process for checking if it is still running
@@ -233,7 +246,7 @@ namespace MHR_SaveManager
             //Set up wait timer to minimise cpu time
             var totalWaitTime = 0;
 
-            while (USER_INPUT.Key != DESIRED_INPUT && !gameProcess.HasExited)
+            while (USER_INPUT.Key != DESIRED_INPUT && !ProcessHasExited(gameProcess))
             {
                 //Clear and backup the save data
                 Console.Clear();
@@ -252,13 +265,13 @@ namespace MHR_SaveManager
                     gameProcess.Refresh();
 
                     totalWaitTime += waitTime;
-                } while (totalWaitTime < saveTime && USER_INPUT.Key != DESIRED_INPUT && !gameProcess.HasExited);
+                } while (totalWaitTime < saveTime && USER_INPUT.Key != DESIRED_INPUT && !ProcessHasExited(gameProcess));
 
                 //Reset wait time
                 totalWaitTime = 0;
             }
 
-            if (gameProcess.HasExited)
+            if (ProcessHasExited(gameProcess))
             {
                 //Exit out of process and don't wait for user input
                 Environment.Exit(0);
@@ -286,7 +299,29 @@ namespace MHR_SaveManager
             var tmpName = gameSaveDataFolder.Substring(steamDataFolder.Length + 1, (gameSaveDataFolder.Length - steamDataFolder.Length) - 1).Replace(@"\", "_");
             var newFolderName = Path.Combine(saveFolderLocation, tmpName);
 
-            CopyAll(gameSaveDataFolder, newFolderName, true);
+            var saveDirectory = CopyAll(gameSaveDataFolder, newFolderName, true);
+
+            ZipFolder(saveDirectory);
+
+            Directory.Delete(saveDirectory, true);
+        }
+
+        private static void ZipFolder(string directory)
+        {
+            var dirName = new DirectoryInfo(directory);
+
+            using (ZipArchive zip = ZipFile.Open($@"{dirName.Parent.FullName}/{dirName.Name}.zip", ZipArchiveMode.Create))
+            {
+                var dirFiles = dirName.GetFiles("*", SearchOption.AllDirectories);
+
+                foreach(var file in dirFiles)
+                {
+                    var newEntryName = file.FullName.Replace(dirName.Parent.FullName, "").Replace(@"\"+dirName.Name + @"\", "");
+                    zip.CreateEntryFromFile(file.FullName, newEntryName);
+                }
+
+               
+            }
         }
 
         private static void KillProcess(string gameName)
@@ -309,11 +344,17 @@ namespace MHR_SaveManager
             return Process.GetProcessesByName(processName).Length;
         }
 
-        private static void CopyAll(string sourceDirectory, string targetDirectory, bool isRootFolder = false)
-        {
+        private static string CopyAll(string sourceDirectory, string targetDirectory, bool isRootFolder = false)
+        {            
             if (isRootFolder)
             {
-                targetDirectory += $"_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
+                if (!Directory.Exists(targetDirectory))
+                {
+                    Directory.CreateDirectory(targetDirectory);
+                }
+
+                var newTargetDirectory = Path.Combine(targetDirectory, $"SAVEDATA_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}");
+                targetDirectory = newTargetDirectory;                
             }
 
             var source = new DirectoryInfo(sourceDirectory);
@@ -339,7 +380,10 @@ namespace MHR_SaveManager
             if (isRootFolder)
             {
                 Console.WriteLine($"{DateTime.Now:dd-mm-yyyy HH:mm:ss} - Completed");
+                return targetDirectory;
             }
+
+            return string.Empty;
         }
 
         private static async Task ExitApplication()
