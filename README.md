@@ -6,10 +6,12 @@ Initial Release:
 - Includes checks for only one running version of program
 - Includes checks for current logged in steam user (only to get userid)
 - Creates bat file in folder, to navigate quickly to save data folder for game
+- Checks if game is already running, and whether user wants to kill process and launch game or skip the launch process
 - Auto runs game via the steam api
 - Auto detects the MH Rise injector if placed within same directory, only need to run this to start the injector along side. (One application to run rise)
 - Puts the program automatically to below normal thread priority to minimise performance impact (next to no performance loss noticed whilst using personally over the last 30 days)
 - Schedules the save data to be backed up every 15 minutes, and keeps a running total of 100 back ups, with the oldest being removed to keep it to the total 100. This gives roughly the last 25 hours of game time worth of saves, but do note that a back is made when first ran so it is only an estimation. Please be aware, that this folder can get large quick (~1GB with all 100 backups, depending on save folder size being roughly 10MB each time)
+- Detects if game has exited, and if so will close the save manager (this works most of the time, however if the game process lingers after it has exited, as is the game sometimes with ReShade not closing it properly, you will still need to press Enter on the console screen.)
 - Errors will be logged to an errorlog.txt for ease of troubleshooting
 - All saves will be stored in a folder named "Save Backup Folder" under the naming convention of year-month-day_hour_minutes_seconds this is to make looking for the latest save easier, and can be sorted by ascending/descending on the name field on windows.
 
