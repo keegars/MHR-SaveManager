@@ -314,13 +314,11 @@ namespace MHR_SaveManager
             {
                 var dirFiles = dirName.GetFiles("*", SearchOption.AllDirectories);
 
-                foreach(var file in dirFiles)
+                foreach (var file in dirFiles)
                 {
-                    var newEntryName = file.FullName.Replace(dirName.Parent.FullName, "").Replace(@"\"+dirName.Name + @"\", "");
+                    var newEntryName = file.FullName.Replace(dirName.Parent.FullName, "").Replace(@"\" + dirName.Name + @"\", "");
                     zip.CreateEntryFromFile(file.FullName, newEntryName);
                 }
-
-               
             }
         }
 
@@ -345,7 +343,7 @@ namespace MHR_SaveManager
         }
 
         private static string CopyAll(string sourceDirectory, string targetDirectory, bool isRootFolder = false)
-        {            
+        {
             if (isRootFolder)
             {
                 if (!Directory.Exists(targetDirectory))
@@ -354,7 +352,7 @@ namespace MHR_SaveManager
                 }
 
                 var newTargetDirectory = Path.Combine(targetDirectory, $"SAVEDATA_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}");
-                targetDirectory = newTargetDirectory;                
+                targetDirectory = newTargetDirectory;
             }
 
             var source = new DirectoryInfo(sourceDirectory);
