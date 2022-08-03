@@ -287,15 +287,7 @@ namespace MHR_SaveManager
                 Directory.CreateDirectory(saveFolderLocation);
             }
 
-            var saveFolders = Directory.GetDirectories(saveFolderLocation);
-            if (saveFolders.Length >= saveLimit)
-            {
-                var weakestFolder = saveFolders.OrderBy(z => z).First();
-                Directory.Delete(weakestFolder, true);
-            }
-
             var gameSaveDataFolder = Path.Combine(steamDataFolder, userId, gameId);
-
             var tmpName = gameSaveDataFolder.Substring(steamDataFolder.Length + 1, (gameSaveDataFolder.Length - steamDataFolder.Length) - 1).Replace(@"\", "_");
             var newFolderName = Path.Combine(saveFolderLocation, tmpName);
 
@@ -304,6 +296,20 @@ namespace MHR_SaveManager
             ZipFolder(saveDirectory);
 
             Directory.Delete(saveDirectory, true);
+
+            //Clean up saved files
+            var savedZipFiles = Directory.GetFiles(newFolderName, "*.zip");
+
+            if (savedZipFiles.Length >= saveLimit)
+            {
+                var keepFiles = savedZipFiles.OrderByDescending(z => z).Take(saveLimit);
+                var weakestFiles = savedZipFiles.Except(keepFiles).ToList();
+
+                foreach (var file in weakestFiles)
+                {
+                    File.Delete(file);
+                }
+            }
         }
 
         private static void ZipFolder(string directory)
