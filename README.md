@@ -35,3 +35,31 @@ Initial Release:
     Do note, I've noticed that with other games the Steam Cloud backup can restore old saves at times. But with Rise, it seems this isn't an issue.
 
 Do note, whilst this reads the registry, it will only ever READ from it. No modifying is done, and no destructive actions apart from the removal of the oldest backup is performed.
+
+# Ini Settings Usage
+1. Run the program at least once
+2. You will find a new file named MHR-SaveManage.ini
+3. Open with notepad or notepad++
+4. Change the values as needed
+
+Each option:
+MaxSaves - int - 1-2147483647 - default 100
+* This controls how many max saves will be held
+
+BackupInterval - int - 1-2147483647 - default 15
+* This controls how often a backup is done in minutes
+
+EnableAutoGameLaunch - boolean - True/False - default True
+* This controls whether the program will auto launch the game when running, this can be set to False to disable all the auto launch features and be solely used to only back up the saves.
+
+UseAlternativeLaunchExecutable - boolean - True/False - default False
+* This controls whether the program will use the AtlernativeLaunchExecutable variable to launch the game instead e.g. with hunterpie or another program altogether.
+* NOTE - If EnableAutoGameLaunch is False, this option will be disabled
+
+AlternativeLaunchExecutable - string - any characters - default Empty
+* This holds the location of an alternative executable to launch instead of launching through steam or the ReShade Injector. Can be used by giving the FULL path including executable name e.g. 
+AlternativeLaunchExecutable=D:\Games\ReShade\injector.exe 
+to launch using an executable.
+
+IgnoreSS_data_slot_bin_Files - boolean - True/False - default False
+* This controls whether during the back up process the files that match the format SSX_dataXXXSlot.bin will be ignored. By default this is off, only turn on if you know what you are doing!!!
