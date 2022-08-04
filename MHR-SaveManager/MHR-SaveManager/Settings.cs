@@ -29,7 +29,8 @@ namespace MHR_SaveManager
                             if (exists)
                             {
                                 var value = iniFile.Read(prop.Name, "General");
-                                prop.SetValue(settings, Convert.ChangeType(value, prop.PropertyType), null);
+                                var newValue = Convert.ChangeType(value, prop.PropertyType);
+                                prop.SetValue(settings , newValue);
                             }
                             else
                             {
@@ -81,7 +82,7 @@ namespace MHR_SaveManager
                 }
                 else
                 {
-                    _MaxSaves = 1;
+                    _MaxSaves = value;
                 }
             }
         }
