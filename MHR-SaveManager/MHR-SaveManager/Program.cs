@@ -319,7 +319,7 @@ namespace MHR_SaveManager
                 try
                 {
                     //Make sure game is closed...
-                    KillProcess(gameName);
+                    KillProcess(gameName, false);
                 }
                 catch {
                     //Let's ignore if we can't kill it, either it closed or didn't....
@@ -381,7 +381,7 @@ namespace MHR_SaveManager
             }
         }
 
-        private static void KillProcess(string gameName)
+        private static void KillProcess(string gameName, bool logError = true)
         {
             var processes = Process.GetProcessesByName(gameName);
 
@@ -394,8 +394,11 @@ namespace MHR_SaveManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to terminate game process, please restart program as administrator if you wish to terminate it.");
-                LogError(ex);
+                if (logError)
+                {
+                    Console.WriteLine("Failed to terminate game process, please restart program as administrator if you wish to terminate it.");
+                    LogError(ex);
+                }
             }
             
         }
