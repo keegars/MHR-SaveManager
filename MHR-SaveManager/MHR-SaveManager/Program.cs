@@ -210,7 +210,7 @@ namespace MHR_SaveManager
 
         private static void LogError(string message)
         {
-             File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "ErrorLog.txt"), $"{Environment.NewLine} {DateTime.Now:dd/MM/yyyy HH:mm:ss} {Environment.NewLine}  ");
+             File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "ErrorLog.txt"), $"{Environment.NewLine} {DateTime.Now:dd/MM/yyyy HH:mm:ss} {Environment.NewLine}  {message}");
         }
 
         private static string GetSteamGameNameById(string gameId)
