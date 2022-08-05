@@ -199,8 +199,18 @@ namespace MHR_SaveManager
             }
             catch (Exception ex)
             {
-                File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "ErrorLog.txt"), $"{Environment.NewLine} {DateTime.Now:dd/MM/yyyy HH:mm:ss} {Environment.NewLine}  {ex.Source} {ex.Message} -  {ex.InnerException} - {ex.StackTrace}");
+               LogError(ex);
             }
+        }
+
+        private static void LogError(Exception ex)
+        {
+            LogError($"{ex.Source} {ex.Message} -  {ex.InnerException} - {ex.StackTrace}");
+        }
+
+        private static void LogError(string message)
+        {
+             File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "ErrorLog.txt"), $"{Environment.NewLine} {DateTime.Now:dd/MM/yyyy HH:mm:ss} {Environment.NewLine}  ");
         }
 
         private static string GetSteamGameNameById(string gameId)
@@ -306,9 +316,15 @@ namespace MHR_SaveManager
 
             if (ProcessHasExited(gameProcess))
             {
-                //Make sure game is closed...
-                gameProcess.Kill();
-
+                try
+                {
+                    //Make sure game is closed...
+                    gameProcess.Kill();
+                }
+                catch (Exception ex) {
+                    LogError(ex);
+                }
+                
                 //Exit out of process and don't wait for user input
                 Environment.Exit(0);
             }
@@ -368,10 +384,19 @@ namespace MHR_SaveManager
         {
             var processes = Process.GetProcessesByName(gameName);
 
-            foreach (var process in processes)
+            try
             {
-                process.Kill();
+                foreach (var process in processes)
+                {
+                    process.Kill();
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to terminate game process, please restart program as administrator if you wish to terminate it.");
+                LogError(ex);
+            }
+            
         }
 
         private static bool ProcessExists(string processName)
