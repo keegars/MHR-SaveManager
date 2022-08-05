@@ -319,10 +319,11 @@ namespace MHR_SaveManager
                 try
                 {
                     //Make sure game is closed...
-                    gameProcess.Kill();
+                    KillProcess(gameName);
                 }
-                catch (Exception ex) {
-                    LogError(ex);
+                catch {
+                    //Let's ignore if we can't kill it, either it closed or didn't....
+                    //LogError(ex);
                 }
                 
                 //Exit out of process and don't wait for user input
